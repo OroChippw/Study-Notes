@@ -584,7 +584,49 @@
 ![intro](assets/13-9.png)
 * 三维平面下同理，重要的判别思想是：只有当光线都通过了三个对面，才说明光线进入了物体的内部，只要光线离开了任一对面，则说明光线离开了物体内部。
 * t<sub>enter</sub>=max{t<sub>min</sub>} ， t<sub>exit</sub>=min{t<sub>max</sub>}，对于三组对面的t<sub>min</sub>求最大值，代表光线最晚进入物体的时间，对于t<sub>max</sub>求最小值，这是光线最早离开物体的时间。如果t<sub>enter</sub> < t<sub>exit</sub>则说明此时光线就在物体内，则光线和物体必定相交
-## Lecture 14:Ray Tracing 2
+* 如果t<sub>exit</sub> < 0，则说明盒子在光线的背后，并没有产生相交
+* 如果t<sub>exit</sub>  >= 0，t<sub>enter</sub> < 0，则说明光源在盒子内部，一定会相交
+* 综上所述，当光线和AABB相交时，t<sub>enter</sub> < t<sub>exit</sub> && t<sub>exit</sub>  >= 0
+![intro](assets/13-10.png)
+* Why Axis-Aligned？光线和平行面好求相交
+## Lecture 14:Ray Tracing 2（Acceleration & Radiometry）
+### 0. 名词解释
+* Basic radiometry：辐射度量学
+### 1. Uniform Spatial Partitions（Grids）
+#### 1.1 Preprocess-Build Acceleation Grid
+* 先找到包围盒，然后创建网格，判断哪些格子内有物体（格子和物体相交）,图中的红色部分也是要涂上的
+![intro](assets/14-1.png)
+#### 1.2 Ray-Scene Intersection
+* 做若干次光线和盒子中的求交，再看盒子内是否有物体
+* 实际上就是光栅化中的问题：如何光栅化一条线
+* Grid Resolution的影响？若盒子太少，效果不大，若盒子太密集，以为着要做很多次光线和格子的求交，效率就下降了。人们发现了网格数 = C * 物体数时较佳，C≈27（无实际意义就是一个数）
+#### 1.3 “Teapot in a stadium” problem
+* 当场景不太均匀的时候，不太适合使用uniform Grids来解决问题
+#### 1.4 Spatial Partitions
+* Oct Tree：八叉树，一个节点有八个子节点。切分什么时候停止？（1）每一块等分切成四块，当一次切分出的四块中，三块都没有和任何物体相交的时候停止切分；（2）当切分到足够小，但仍然和物体相交的时候也不进行切分了
+* KD-Tree：和八叉树的区别是，对于某个格子，总是沿着某一个轴（水平->竖直->水平），切一刀，只切为两个.中间节点不存在物体，物体只存储在叶子节点上
+![intro](assets/14-3.png)
+![intro](assets/14-4.png)
+* BSP-Tree：每次选一个方向，将节点砍开，和KD-Tree的区别：不是横平竖直的砍，在维度高的时候不好计算（二维的时候看开需要一条线，三维的时候需要一个平面，三维以上则需要一个超平面了）
+![intro](assets/14-2.png)
+##### 1.4.1 Traversing a KD-Tree
+* 光线追踪是如何通过KD-Tree进行加速的？如果光线和格子没有交点，则什么都不用做，如果光线和格子存在交点，则光线和其的两个子节点都有可能相交，需要都求一下，若为叶子节点，则和叶子节点内的所有物体求交。最基本的逻辑还是光线和包围盒都不相交，和里面的物体也不会相交
+![intro](assets/14-5.png)
+#### 1.5 Pbject Partitions & Bounding Volume Hierarchy(BVH)
+* KD-Tree后来逐渐被弃用，因为不好判断光线与三角形是否相交，交集十分不好判断，比如光线穿过了一个三角形，但三角形将格子包围了起来，导致三角形的顶点都在该格子外。其次一个物体可能和多个AABB格子有交集，则多个叶子结点需要重复存储该物体，出现冗余的情况
+* 于是提出用物体进行划分BVH，现在得到了广泛的运用。一个物体只可能出现在一个包围盒里，解决了KD-Tree的问题，但对于空间的划分，并不是严格的划分开，包围盒之间是可能相交的
+* 步骤依次为（1）找到包围盒（2）递归的将物体划分为两个部分（3）将两个部分都重新计算包围盒（4）足够小的三角形时，停止计算，同样的叶子节点中才存储物体
+![intro](assets/14-6.png)
+* 如何选定划分的节点？（1）可以和KD-Tree一样，选定一个维度方向进行划分（2）为了让三角形在空间中有均匀的分布，每一次只按照当前最长的轴进行划分，将长的轴切分开（3）按照排序，将第中位数个三角形进行划分，保证树两侧的三角形数量差不多，树接近平衡，提高查找效率。如何排序：可以取所有三角形的重心；如果只是找中位数，其实不需要排序，对于任意一列无序的数，找第2/n大的数，使用快速选择算法O(n)即可解决
+![intro](assets/14-7.png)
+* 如果和盒子相交两种可能，（1）该节点本来就是叶子节点，光线要和盒子里面的所有三角形都要求交（2）不是叶子节点，是中间节点，则需要和该节点的两个叶子节点都求交
+![intro](assets/14-8.png)
+### 2 Basic radiometry
+* 引入辐射度量学的动机？光线的强度intensity-I的单位是什么，在之前的Blinn-Phong里面只是一个概念，辐射度量学则是精确的定义光线的若干属性的方法
+#### 2.1 Radiant Energy and Flux(Power)
+* Radiant Energy：辐射能是电磁辐射的能量，以焦耳为单位
+* Radiant Flux：辐射通量（功率），单位时间内发射，反射的能量
+
 ## Lecture 15:Ray Tracing 3
 ## Lecture 16:Ray Tracing 4
 ## Lecture 17:Materials and Appearances

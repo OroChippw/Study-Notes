@@ -626,8 +626,13 @@
 #### 2.1 Radiant Energy and Flux(Power)
 * Radiant Energy：辐射能是电磁辐射的能量，以焦耳为单位
 * Radiant Flux：辐射通量（功率），单位时间内发射，反射的能量
-
-## Lecture 15:Ray Tracing 3
+#### 2.2 Radiant Intensity
+* 辐射强度：单位立体角由点光源发出的功率，计算方式为能量除以立体角（单位是sr，球面度）,辐射强度本身的单位叫candela（瓦特/球面度）
+* 立体角：在二维上，一个角的角度radians等于对于的弧长 / 半径，立体角则是这个概念在三维上的延伸，从球心射出一个锥，锥映射在球面上形成的区域面积则为A，A / 半径的平方，则是立体角，单位是steradians。整个球的立体角是4Π
+![intro](assets/14-9.png)
+* Intensity则是光源在任何一个方向上的亮度
+## Lecture 15:Ray Tracing 3 （Light Transport & Global Illumination）
+### 
 ## Lecture 16:Ray Tracing 4
 ## Lecture 17:Materials and Appearances
 ## Lecture 18:Advanced Topics in Rendering

@@ -666,11 +666,142 @@
 * Monte Carlo Path Tracing：蒙特卡罗路径追踪
 ### 1. Monte Carlo Integration
 * 蒙特卡罗积分，随机进行采样，在a和b之间，
-* 
-### 2.
+![intro](assets/16-1.jpg)
+### 2. Path Tracing
+* 解决Ray Tracing存在的问题
+![intro](assets/16-2.jpg)
+* 用n=1，来做蒙特卡罗积分，就称为路径追踪。n≠1时，会出现指数爆炸
+![intro](assets/16-3.jpg)
+* 将光的弹射次数进行限制是不合理的，会导致损失能量。但在计算机中又无法进行无限次数的递归，递归需要有终止条件。此时人们引入了Russian Roulette，使用该方法，以一定的概率停止光线的追踪
+![intro](assets/16-4.jpg)
+* 提前定好一个概率，以该概率往某一个方向打一条光线，得到结果后再除以概率P，不在该概率内则直接返回0，则可以算出期望
+![intro](assets/16-5.jpg)
+* 整合到伪代码上则效果如下，最终算法一定会以概率的方式停下
+![intro](assets/16-6.jpg)
+* 由于着色点是均匀的朝外进行采样，则可能大量的光线被浪费，只有少量的光线能打到光源上，如果直接对光源上的点进行采样，则可以提高效率。只需要知道dw和dA的关系，再对渲染方程重写即可
+![intro](assets/16-7.jpg)
+![intro](assets/16-8.jpg)
+* 在什么领域积分，就在什么领域进行采样
+### 3. Previous vs Modern Concepts
+* 以前和现在对于一些概念的理解差异
+![intro](assets/16-9.jpg)
+#### 3.1 Haven't covered
+![intro](assets/16-10.jpg)
+![intro](assets/16-11.jpg)
+
 ## Lecture 17:Materials and Appearances
+### 0. 名词解释
+* Microfacet Material：微表面模型
+* Isotropic：各项同性
+* Anisotropic：各项异性
+### 1. Material
+* Material == BRDF
+#### 1.1 perfect Specular Reflection
+![intro](assets/17-1.jpg)
+#### 1.2 Specular Refraction
+![intro](assets/17-2.jpg)
+* 人在水底下只能看到一个锥形区域，称为Snell‘s Window现象
+![intro](assets/17-3.jpg)
+* Fresnel Term 菲涅尔项
+#### 1.3 Microfacet Material
+* 认为从远处看过去都是粗糙的平面，近处看过去全是镜面反射的微元，认为所有的微表面都是一个个小镜子，每个微表面有自己的法线，越光滑则不同微表面的法线方向越一致，越粗糙则不同微表面的法线方向越相异。
+![intro](assets/17-4.jpg)
+* 则一个物体的表面粗糙程度可以用法线发布情况来表示，只有微表面的法线方向和入射角、出射角之间的half vector完全一致的时候，才能精准的把光线从入射角反射到出射角
+![intro](assets/17-5.jpg)
+* 微表面模型是目前的SOTA，可以描述的物体特别多，且和现实情况十分相似。微表面模型是一个统称
+#### 1.4 Isotropic/Anisotropic Materials
+* 区别在于法线分布是否存在方向性，典型的Anisotropic材质有尼龙、Velvet绒质的外观
+![intro](assets/17-6.jpg)
+* 各项同性，则代表BRDF的值只与相对的方位角有关，会降维四维变三维，同时由于可逆性，不需要考虑入射出射的角度正负性
+#### 1.5 Properties of BRDFs
+* BRDF的属性，非负性、线性性质、可逆性、能量守恒（上文说到的Path Tracing无限次弹射之后光线会进行收敛就是因为BRDF的能量守恒性）
+![intro](assets/17-7.jpg)
+![intro](assets/17-8.jpg)
+#### 1.6 Measuring BRDFs
+* 一个叫gonioreflectometer的仪器，也叫Spherical gantry，一边相机一边光源围绕球心的样本进行旋转
+![intro](assets/17-9.jpg)
+* 枚举所有出射方向，放上相机，枚举所有入射方向，放上光源，但是由于是四维，每次换一个角度就要重新测量一遍整个球面，则可以根据各项同性，进行四维降维到三维，加速BRDFs的测量
+* 一个有名的BRDFs的库：MERL BRDF Database， 每种材质测量90 * 90 * 180次
 ## Lecture 18:Advanced Topics in Rendering
+### 0. 名词解释
+* Photon mapping：光子映射
+* Participating Media：反射介质，比如云、烟、雾
+* Translucent Material：半透明材质
+### 1. Unbiased light transport methods
+* 蒙特卡罗的结果期望永远都是对的，则称为无偏的unbiased
+* 若为biased，使用了多组值，期望的结果是收敛的，则称为一致的consistent
+#### 1.1 Bidirectional path tracing (BDPT)
+* 会生成两个半路径或子路径，将两个半路径的端点连接起来，找到的路径都十分合理
+* 实现难度很高，同时十分慢
+#### 1.2 Metropolis light transport (MLT)
+* 用统计学上的Markov Chain马尔科夫链（根据当前的样本根据其周围，生成一个相近的样本）,已知一条路径生成一条相似的路径，局部的方法，围绕样本的周围
+* 适合困难光路的传播，找到一条就可以泛化
+![intro](assets/18-1.jpg)
+* 缺点：理论上很难分析收敛的速度，所有操作都是局部的，一些收敛的快，一些收敛的慢，会导致图像看上去有点脏dirty，若用来渲染动画，则上一帧和这一帧会会产生强烈的抖动
+### 2. Biased light transport methods
+#### 2.1 Photon mapping
+* 适合渲染caustic的情况，光线聚焦产生的图案
+#### 2.2 Vertex connection and merging (VCM)
+* 将BDPT和photon mapping进行结合，两边过来的两个光子在一个局部面上，则认为这两个光子在同一个光路上，将二者的贡献结合起来
+### 3. Instant radiosity (VPL / many light methods)
+* 实时辐射度方法，已经被照亮的面，认为就是一个虚拟的光源Virtual Point LIght，将其再照亮别人，相当于一次二次弹射。一个着色点会被所有的光源所照亮
+![intro](assets/18-2.jpg)
+* 速度很快，但存在的问题是在某些地方会莫名其妙的发光，原因是若光源和着色点之间极近，则会除以二者的差的平方，一个极小的数，结果就会很大，与此同时VPL不能做镜面的物体
+### 2. Advanced Appearance Modeling
+#### 2.1 Nonusurface models
+* Phase Function：相位函数，决定光线如何散射
+* Kajiya-Kay Model：对于一根头发认为是一根圆柱，在接收到一束光线时，认为会散射出一个圆锥出来，然效果并不好，就有人提出Marschner Model，
+![intro](assets/18-3.jpg)
+* Marschner Model，把一根头发当成玻璃材质的圆柱，认为头发内部有色素，考虑三种 光线和圆柱交互的情况，表面，内部反射，散射。效果更加好，若考虑多根头发之间的相互光线弹射，则计算量更大
+![intro](assets/18-4.jpg)
+![intro](assets/18-5.jpg)
+![intro](assets/18-6.jpg)
+* 人的头发渲染过程并不能描述光线和动物毛发的交互过程，和生物结构有关，动物的毛发中有一层叫髓质Cortex，动物毛发的髓质比人的更大，散射更强。玻璃柱模型并没有考虑人头发的髓质情况，于是有人提出双圆柱体模型，中间的圆柱代表髓质medulla
+![intro](assets/18-7.jpg)
+![intro](assets/18-8.jpg)
+#### 2.2 Surface models
+#### 2.3 Procedural appearance
+* noise函数，空间中的纹理信息，将一个木头砍开，可以看到里面的纹理
+* Procedural是随用随取的意思，不事先生成
 ## Lecture 19:Cameras,Lenses and Light Fields
+### 0. 名词解释
+* lenses：透镜
+* light fields：光场
+* Imaging = Sythesis + Capture，生成图像除了合成还能用捕捉
+* Shutter：快门
+* Sensor：传感器
+* 
+### 1. Cameras
+* 对于传感器上的一个点，记录的是irradiance
+* Pinhole Camera：拍出来的东西没有深度可言，拍出来的东西都是清晰锐利的，不存在虚的部分
+* Field of View(FOV)：视场，能看到多大的范围。决定FOV的因素有focal length焦距、SensorSize传感器的大小，焦距变小视场变大，传感器大小大一点视场也大一些。人们在定义FOV时，都基于在35mm的胶片传感器下进行定义，通过焦距来定义FOV
+![intro](assets/19-1.jpg)
+* 但实际上手机的胶片只会更小，胶片和棱镜的距离也没有几十mm，所以中间只是一个对应关系，相较于35mm的胶片是多少的焦距
+![intro](assets/19-2.jpg)
+* Exposure：曝光度，等价于time * irradiance，进了多少光乘以进了多少的时间，时间通过快门来控制
+![intro](assets/19-3.jpg)
+* Lens aperture size：光圈大小，控制进光量，数字越小光圈越大，仿生人的瞳孔（在幽暗的时候瞳孔会放大）。由参数F-stop，又称为F数,F-Number进行控制，记作F-N或F/N。欧洲常把点号写成逗号。若把光圈看作一个圆，则光圈大小可以看作焦距除以光圈这个圆直径，即focal length / d
+* Shutter Speed：快门速度越快，快门开放的时间越短，单位为ms毫秒
+* ISO gain：感光度，一个后期处理，当感光元件已经感知到光后，最后接收到多少能量后期再乘上某一个数。从信号的角度来说，乘以一个数放大信号的同时，也会放大噪声，图像更亮，也会更noise
+![intro](assets/19-4.jpg)
+* 可见光圈越大，成像越虚；快门打开时间越长，则会产生Motion blur运动模糊，即为timeleaspe，运动模糊不一定是坏事，在游戏中模糊也降低了抗锯齿的难度，有反走样的效果
+![intro](assets/19-5.jpg)
+* Rolling shutter：对于高速运动的物体，会产生扭曲，图像中不同的位置记录的是不同时间的状态，由快门不同的打开时间导致
+* 下述参数组合基本可以实现一样的曝光度，但是不代表成像就是一样的，因为光圈会影响景深，快门速度会影响运动模糊
+![intro](assets/19-6.jpg)
+### 2. Lenses
+* 前提：研究的透镜是一个理想化的薄透镜，平行打进来的光都会集中在一个点上，这个点就是焦点，由于光线具有可逆性，所有又认为经过焦点的光线通过棱镜后一定是平行的。同时，认为焦距是可以改变的
+![intro](assets/19-7.jpg)
+* 1/焦距 = 1/物距 + 1/像距，则对于相同的焦距下，改变像距，物距也要跟着一起改
+#### 2.1 Circle of Confusion(CoC)
+* 模糊程度和A，aperture相关，和光圈大小成正比，拍清晰的照片要用小光圈，在focal plane会不模糊，光圈影响的是模糊的范围
+![intro](assets/19-8.jpg)
+![intro](assets/19-9.jpg)
+* Depth of Field ： FYI
+![intro](assets/19-10.jpg)
+### 3. Light Fields/Lumigraph
+* 
 ## Lecture 20:Color and Perception
+### 0. 名词解释
 ## Lecture 21:Animation
 ## Lecture 22:Animation Cont.

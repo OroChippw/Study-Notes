@@ -770,7 +770,8 @@
 * Imaging = Sythesis + Capture，生成图像除了合成还能用捕捉
 * Shutter：快门
 * Sensor：传感器
-* 
+* Lumigraph：光场，两个组织同时发现了光场并各自命名
+* Holographic movie：全息电影
 ### 1. Cameras
 * 对于传感器上的一个点，记录的是irradiance
 * Pinhole Camera：拍出来的东西没有深度可言，拍出来的东西都是清晰锐利的，不存在虚的部分
@@ -800,8 +801,88 @@
 * Depth of Field ： FYI
 ![intro](assets/19-10.jpg)
 ### 3. Light Fields/Lumigraph
-* 
+* The Plenoptic Function：全光函数，就是我们任何位置任何时间可以见到的所有东西，整个世界是七个系数的表示
+![intro](assets/19-11.jpg)
+* 光场就是任何一个位置，往任何一个方向，光的强度，是全光函数的一部分（只考虑位置和方向）
+* 光场相机，原理就是利用光场，记录了整个光场的信息，将原本的像素位置换为微透镜，将透镜往后拿一点，原本记录一个像素，现在记录一块像素，类似苍蝇的腹眼
+![intro](assets/19-12.jpg)
 ## Lecture 20:Color and Perception
 ### 0. 名词解释
+* Spectrum：光谱
+* Spectral Power Distribution（SPD）：谱功率密度
+* Metamerism：同色异谱
+* Gamut：色域
+### 1. Color
+* 可见光光谱分布在400-700nm范围内
+* SPD，具有线性的性质
+![intro](assets/20-1.jpg)
+* Color，颜色其实是人的感知，人的视网膜上存在感光细胞Photoreceptor Cells,Rod cells感知光的强度，能得到一个灰度图，Cone cells较少，感知颜色
+![intro](assets/20-2.jpg)
+* 感知颜色的锥形细胞又分为三类，S/M/L，三种细胞对三种波长的光线响应不同，S对应小波长高频率，M对应中等波长，L对应长波长。不同的人眼睛里面三种细胞数量及位置分布不一样，每个人之间存在差异，每个人眼中的世界是不一样的。给定任一光线，大家看到的是积分后的一个数，三种细胞对应三个数S/M/L
+![intro](assets/20-3.jpg)
+* Metamerism：那么就有可能出现在不同的光线由于每个人感光细胞数量不同而得出相同积分结果的情况，得到相同的感知，这就是同色异谱，则此时需要颜色匹配
+* Color Matching：颜色之间可以相加，加色系统允许基本颜色的线性组合构成相同的颜色，混合颜色的系数是可以为负数的
+![intro](assets/20-4.jpg)
+### 2. Color Spaces
+* CIE RGB
+* CIE XYZ：为了在二维空间进行可视化，对于XYZ都先做了归一化，得到x,y,z,且x+y+z=1。下图的扇形又称为Gamut色域，白色在最中心，混合的最多的颜色，又称为最不纯的颜色，纯色都在边界地方
+![intro](assets/20-5.jpg)
+* HSV Color Space (Hue色调-Saturation饱和-Value亮度)：颜色拾取器
+* CIELAB Space AKA L * a * b * ：L是亮度，a轴表示红-绿，b轴表示蓝-黄，认为每个轴的两端都是互补色，互补色是通过实验测量得出的
+![intro](assets/20-6.jpg)
+* CMYK：一个抽象的减色系统，CMY已经能得到黑色，为什么该系统要带上黑色？因为印刷时要考虑成本，大多数情况下打印的颜色为黑色
+![intro](assets/20-6.jpg)
 ## Lecture 21:Animation
+### 0. 名词解释
+### 1. Animation
+* Bring thing to life，Communication tool
+* Film：24fps，Video：30fps，Virtual reality：90fps
+#### 1.1 Keyframe Animation
+* 关键帧动画，在两个关键帧之间使用人工或计算机进行生成帧过渡插值，技术有flash生成中间过渡帧
+* 质点弹簧系统，一系列相互连接的系统和弹簧，最基础的单元是一个弹簧左右连接了两个字典。a、b均为向量，ks为劲度系数。弹簧一般都是有长度的，长度不可能为0，所以把弹簧的长度也考虑进去
+![intro](assets/21-1.jpg)
+![intro](assets/21-2.jpg)
+* 存在的问题是，由于能量守恒，动能和弹性势能的会一直转换，产生振动。加入一个摩擦力damping force，使其能停止。仍然存在的问题，只能描述弹簧外部的力，无法描述弹簧内部的力，添加一个内部的摩擦力
+![intro](assets/21-3.jpg)
+* 蓝线构成的对角线是布料弹簧点之间的对角线，引入skip connection红线，让面产生更平滑的弯折
+![intro](assets/21-4.jpg)
+#### 1.2 Particle Systems
+* 考虑粒子间内部外部的力，更新粒子的位置和速度，诞生与消亡
+![intro](assets/21-5.jpg)
+#### 1.3 Forward Kinematics
+* 正向运动学，有三种关节，pin，ball，Prismatic joint
+![intro](assets/21-6.jpg)
+![intro](assets/21-7.jpg)
+* 定义十分物理，多少多少的角度，不够直观，于是产生了逆运动学
+#### 1.4 Inverse Kinematics
+* 逆运动学，给定尖端的最终位置，不关心尖端的调整过程，解不唯一，有时也会无解，十分困难，
+### 2. Rigging
+* 提线木偶的方法，在电影中常用，通过各种控制点进行控制模型
+### 3. Motion Capture
+* 动作捕捉，建立真人和角色的控制点映射，真实感更强
+* Uncanny valley：恐怖谷效应
+![intro](assets/21-8.jpg)
 ## Lecture 22:Animation Cont.
+### 0. 名词解释
+* Implicit Euler Method：隐式的欧拉方法
+* Rigid Body：刚体
+### 1. Ordinary Differential Equation(ODE)
+* 常微分方程，知道一个量的微分是多少，推出这个量是多少
+![intro](assets/22-1.jpg)
+* 欧拉方法：上一时刻的位置速度，给定时间结合加速度，得到下一时刻的位置和速度。用上一时刻的量估计下一时刻的量。缺点是存在误差和稳定性不高
+![intro](assets/22-2.jpg)
+* 解决不稳定性的一系列方法
+![intro](assets/22-3.jpg)
+* 如何去定义是否为稳定的？
+![intro](assets/22-4.jpg)
+### 2. Runge-Kutta Families
+![intro](assets/22-5.jpg)
+### 3. Rigid Body Simulation
+* 考虑刚体在原本的物体上多考虑了角速度
+![intro](assets/22-6.jpg)
+* 水体则认为是很多个不可再压缩的刚体小球组成的，水再任何地方都是不可压缩和拉伸的，任一时刻任意位置密度都是一样的
+### 4. Eulerian vs Lagrangian
+![intro](assets/22-7.jpg)
+## Any Other Rendering Corses?
+![intro](assets/23-1.jpg)
+![intro](assets/23-2.jpg)

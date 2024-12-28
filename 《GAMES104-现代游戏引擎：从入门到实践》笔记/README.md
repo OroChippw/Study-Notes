@@ -174,7 +174,7 @@
 ![intro](assets/4-14.jpg)
 
 
-## Lecture 5 :
+## Lecture 5 : Rendering On Game Engine - Lighting , Materials and Shaders
 
 
 
